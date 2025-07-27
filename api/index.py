@@ -17,7 +17,7 @@ CORS(app)
 # Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///grading_system.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'your-secret-key-change-this-in-production'
+app.config['JWT_SECRET_KEY'] = 'python-auto-grader-secret-key-2024'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 
 db = SQLAlchemy(app)
@@ -36,6 +36,15 @@ class User(db.Model):
     assignments_created = db.relationship('Assignment', backref='creator', lazy=True, foreign_keys='Assignment.teacher_id')
     submissions = db.relationship('Submission', backref='student', lazy=True)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'role': self.role,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -47,6 +56,15 @@ class Course(db.Model):
     # Relationships
     assignments = db.relationship('Assignment', backref='course', lazy=True)
     enrollments = db.relationship('Enrollment', backref='course', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'code': self.code,
+            'description': self.description,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 class Enrollment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -73,6 +91,18 @@ class Assignment(db.Model):
     # Relationships
     submissions = db.relationship('Submission', backref='assignment', lazy=True)
     test_results = db.relationship('TestResult', backref='assignment', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'max_score': self.max_score,
+            'starter_code': self.starter_code,
+            'test_cases': json.loads(self.test_cases) if self.test_cases else [],
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 class Submission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -181,118 +211,228 @@ class AutoGrader:
         
         return result
 
+# Database initialization function
+def init_database():
+    """Initialize database and create default users"""
+    try:
+        # Create all tables
+        db.create_all()
+        print("✅ Database tables created")
+        
+        # Create default admin user if it doesn't exist
+        admin_user = User.query.filter_by(username='admin').first()
+        if not admin_user:
+            admin_user = User(
+                username='admin',
+                email='admin@pythongrader.com',
+                password_hash=generate_password_hash('admin123'),
+                role='teacher'
+            )
+            db.session.add(admin_user)
+            print("✅ Created admin user: admin / admin123")
+        
+        # Create default student user for testing
+        student_user = User.query.filter_by(username='student').first()
+        if not student_user:
+            student_user = User(
+                username='student',
+                email='student@pythongrader.com',
+                password_hash=generate_password_hash('student123'),
+                role='student'
+            )
+            db.session.add(student_user)
+            print("✅ Created student user: student / student123")
+        
+        # Create sample course if admin exists
+        if admin_user and not Course.query.filter_by(teacher_id=admin_user.id).first():
+            sample_course = Course(
+                name='Introduction to Python Programming',
+                code='CS101',
+                description='Learn the fundamentals of Python programming including variables, functions, loops, and data structures.',
+                teacher_id=admin_user.id
+            )
+            db.session.add(sample_course)
+            
+            # Create a sample assignment
+            sample_assignment = Assignment(
+                title='Hello World Program',
+                description='Write a Python program that prints "Hello, World!" to the console.',
+                course_id=sample_course.id,
+                teacher_id=admin_user.id,
+                due_date=datetime.utcnow() + timedelta(days=7),
+                max_score=100,
+                test_cases=json.dumps([
+                    {"name": "Basic Test", "input": "", "expected": "Hello, World!"}
+                ]),
+                starter_code='# Write your code here\nprint("Hello, World!")'
+            )
+            db.session.add(sample_assignment)
+            print("✅ Created sample course and assignment")
+        
+        db.session.commit()
+        print("✅ Database initialization completed successfully!")
+        
+    except Exception as e:
+        print(f"❌ Database initialization failed: {str(e)}")
+        db.session.rollback()
+        raise
+
 # API Routes
 
 @app.route('/api/auth/register', methods=['POST'])
 def register():
-    data = request.get_json()
-    
-    # Validate input
-    if not data.get('username') or not data.get('email') or not data.get('password'):
-        return jsonify({'error': 'Missing required fields'}), 400
-    
-    # Check if user already exists
-    if User.query.filter_by(username=data['username']).first():
-        return jsonify({'error': 'Username already exists'}), 400
-    
-    if User.query.filter_by(email=data['email']).first():
-        return jsonify({'error': 'Email already exists'}), 400
-    
-    # Create new user
-    user = User(
-        username=data['username'],
-        email=data['email'],
-        password_hash=generate_password_hash(data['password']),
-        role=data.get('role', 'student')
-    )
-    
-    db.session.add(user)
-    db.session.commit()
-    
-    # Create access token
-    access_token = create_access_token(identity=str(user.id))
-    
-    return jsonify({
-        'access_token': access_token,
-        'user': {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'role': user.role
-        }
-    }), 201
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        if not data or not data.get('username') or not data.get('email') or not data.get('password'):
+            return jsonify({'error': 'Missing required fields: username, email, password'}), 400
+        
+        # Check if user already exists
+        if User.query.filter_by(username=data['username']).first():
+            return jsonify({'error': 'Username already exists'}), 400
+        
+        if User.query.filter_by(email=data['email']).first():
+            return jsonify({'error': 'Email already exists'}), 400
+        
+        # Create new user
+        user = User(
+            username=data['username'],
+            email=data['email'],
+            password_hash=generate_password_hash(data['password']),
+            role=data.get('role', 'student')
+        )
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        # Create access token
+        access_token = create_access_token(identity=str(user.id))
+        
+        return jsonify({
+            'success': True,
+            'message': 'User registered successfully',
+            'access_token': access_token,
+            'user': user.to_dict()
+        }), 201
+        
+    except Exception as e:
+        print(f"Registration error: {str(e)}")
+        return jsonify({'error': 'Registration failed', 'details': str(e)}), 500
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    
-    if not data.get('username') or not data.get('password'):
-        return jsonify({'error': 'Missing username or password'}), 400
-    
-    user = User.query.filter_by(username=data['username']).first()
-    
-    if user and check_password_hash(user.password_hash, data['password']):
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('username') or not data.get('password'):
+            return jsonify({'error': 'Missing username or password'}), 400
+        
+        user = User.query.filter_by(username=data['username']).first()
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 401
+        
+        if not check_password_hash(user.password_hash, data['password']):
+            return jsonify({'error': 'Invalid password'}), 401
+        
+        # Create access token
         access_token = create_access_token(identity=str(user.id))
+        
         return jsonify({
+            'success': True,
+            'message': 'Login successful',
             'access_token': access_token,
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'role': user.role
-            }
-        })
-    
-    return jsonify({'error': 'Invalid credentials'}), 401
+            'user': user.to_dict()
+        }), 200
+        
+    except Exception as e:
+        print(f"Login error: {str(e)}")
+        return jsonify({'error': 'Login failed', 'details': str(e)}), 500
+
+@app.route('/api/auth/verify', methods=['GET'])
+@jwt_required()
+def verify_token():
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'user': user.to_dict()
+        }), 200
+        
+    except Exception as e:
+        print(f"Token verification error: {str(e)}")
+        return jsonify({'error': 'Token verification failed'}), 401
 
 @app.route('/api/courses', methods=['GET'])
 @jwt_required()
 def get_courses():
-    user_id = int(get_jwt_identity())
-    user = User.query.get(user_id)
-    
-    if user.role == 'teacher':
-        courses = Course.query.filter_by(teacher_id=user_id).all()
-    else:
-        # Get enrolled courses for students
-        enrollments = Enrollment.query.filter_by(student_id=user_id).all()
-        courses = [enrollment.course for enrollment in enrollments]
-    
-    return jsonify([{
-        'id': course.id,
-        'name': course.name,
-        'code': course.code,
-        'description': course.description,
-        'created_at': course.created_at.isoformat()
-    } for course in courses])
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        if user.role == 'teacher':
+            courses = Course.query.filter_by(teacher_id=user_id).all()
+        else:
+            # Get enrolled courses for students
+            enrollments = Enrollment.query.filter_by(student_id=user_id).all()
+            courses = [enrollment.course for enrollment in enrollments]
+        
+        return jsonify({
+            'success': True,
+            'courses': [course.to_dict() for course in courses]
+        }), 200
+        
+    except Exception as e:
+        print(f"Get courses error: {str(e)}")
+        return jsonify({'error': 'Failed to get courses'}), 500
 
 @app.route('/api/courses', methods=['POST'])
 @jwt_required()
 def create_course():
-    user_id = int(get_jwt_identity())
-    user = User.query.get(user_id)
-    
-    if user.role != 'teacher':
-        return jsonify({'error': 'Only teachers can create courses'}), 403
-    
-    data = request.get_json()
-    
-    course = Course(
-        name=data['name'],
-        code=data['code'],
-        description=data.get('description', ''),
-        teacher_id=user_id
-    )
-    
-    db.session.add(course)
-    db.session.commit()
-    
-    return jsonify({
-        'id': course.id,
-        'name': course.name,
-        'code': course.code,
-        'description': course.description
-    }), 201
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or user.role != 'teacher':
+            return jsonify({'error': 'Only teachers can create courses'}), 403
+        
+        data = request.get_json()
+        
+        if not data or not data.get('name') or not data.get('code'):
+            return jsonify({'error': 'Missing required fields: name, code'}), 400
+        
+        # Check if course code already exists
+        if Course.query.filter_by(code=data['code']).first():
+            return jsonify({'error': 'Course code already exists'}), 400
+        
+        course = Course(
+            name=data['name'],
+            code=data['code'],
+            description=data.get('description', ''),
+            teacher_id=user_id
+        )
+        
+        db.session.add(course)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Course created successfully',
+            'course': course.to_dict()
+        }), 201
+        
+    except Exception as e:
+        print(f"Create course error: {str(e)}")
+        return jsonify({'error': 'Failed to create course'}), 500
 
 @app.route('/api/courses/<int:course_id>/assignments', methods=['GET'])
 @jwt_required()
@@ -452,29 +592,42 @@ def get_submission_details(submission_id):
         } for result in submission.test_results]
     })
 
-# Initialize database
-def create_tables():
-    db.create_all()
-    
-    # Create default admin user if it doesn't exist
-    if not User.query.filter_by(username='admin').first():
-        admin = User(
-            username='admin',
-            email='admin@example.com',
-            password_hash=generate_password_hash('admin123'),
-            role='teacher'
-        )
-        db.session.add(admin)
-        db.session.commit()
-
 # Health check endpoint
 @app.route('/api/health')
 def health_check():
-    return jsonify({'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()})
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'database': 'connected'
+    })
+
+# Test authentication endpoint
+@app.route('/api/test-auth')
+def test_auth():
+    """Test endpoint to verify authentication setup"""
+    try:
+        # Check if admin user exists
+        admin = User.query.filter_by(username='admin').first()
+        student = User.query.filter_by(username='student').first()
+        
+        return jsonify({
+            'status': 'Authentication system ready',
+            'admin_exists': admin is not None,
+            'student_exists': student is not None,
+            'admin_credentials': 'admin / admin123' if admin else 'Not created',
+            'student_credentials': 'student / student123' if student else 'Not created',
+            'total_users': User.query.count(),
+            'total_courses': Course.query.count()
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        })
 
 # Initialize database on startup
 with app.app_context():
-    create_tables()
+    init_database()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5328)

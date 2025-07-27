@@ -62,6 +62,7 @@ class ApiClient {
     role?: 'teacher' | 'student';
   }) {
     const response = await this.request<{
+      success: boolean;
       access_token: string;
       user: User;
     }>('/auth/register', {
@@ -75,6 +76,7 @@ class ApiClient {
 
   async login(credentials: { username: string; password: string }) {
     const response = await this.request<{
+      success: boolean;
       access_token: string;
       user: User;
     }>('/auth/login', {
@@ -88,7 +90,11 @@ class ApiClient {
 
   // Course endpoints
   async getCourses(): Promise<Course[]> {
-    return this.request<Course[]>('/courses');
+    const response = await this.request<{
+      success: boolean;
+      courses: Course[];
+    }>('/courses');
+    return response.courses;
   }
 
   async createCourse(courseData: {
