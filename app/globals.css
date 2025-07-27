@@ -2,10 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  
+  /* Apple Music inspired colors */
+  --primary: 255, 45, 85;
+  --primary-light: 255, 105, 135;
+  --secondary: 90, 200, 250;
+  --accent: 48, 209, 88;
+  --surface: 242, 242, 247;
+  --surface-secondary: 255, 255, 255;
+  --text-primary: 0, 0, 0;
+  --text-secondary: 60, 60, 67;
+  --text-tertiary: 142, 142, 147;
+  --border: 229, 229, 234;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -13,7 +27,29 @@
     --foreground-rgb: 255, 255, 255;
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
+    
+    --surface: 28, 28, 30;
+    --surface-secondary: 44, 44, 46;
+    --text-primary: 255, 255, 255;
+    --text-secondary: 235, 235, 245;
+    --text-tertiary: 142, 142, 147;
+    --border: 58, 58, 60;
   }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: rgb(var(--surface));
+  color: rgb(var(--text-primary));
 }
 
 body {
@@ -24,4 +60,69 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--surface));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--text-tertiary));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--text-secondary));
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Button styles */
+.btn-primary {
+  @apply bg-red-500 hover:bg-red-600 text-white font-medium px-6 py-3 rounded-full transition-all duration-200 transform hover:scale-105 active:scale-95;
+}
+
+.btn-secondary {
+  @apply bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium px-6 py-3 rounded-full transition-all duration-200;
+}
+
+/* Card styles */
+.card {
+  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-200;
+}
+
+.card-hover {
+  @apply hover:shadow-xl hover:scale-105 transform transition-all duration-200;
+}
+
+/* Input styles */
+.input {
+  @apply w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200;
+}
+
+/* Monaco Editor dark theme override */
+.monaco-editor-dark {
+  background-color: rgb(var(--surface-secondary)) !important;
 }

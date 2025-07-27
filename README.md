@@ -1,78 +1,215 @@
-<p align="center">
-  <a href="https://nextjs-flask-starter.vercel.app/">
-    <img src="https://assets.vercel.com/image/upload/v1588805858/repositories/vercel/logo.png" height="96">
-    <h3 align="center">Next.js Flask Starter</h3>
-  </a>
-</p>
+# Python Auto Grader
 
-<p align="center">Simple Next.js boilerplate that uses <a href="https://flask.palletsprojects.com/">Flask</a> as the API backend.</p>
+A modern assignment auto-grading system for Python programming courses, built with Next.js and Flask. Features a beautiful Apple Music-inspired UI design with comprehensive functionality for both teachers and students.
 
-<br/>
+## 🚀 Features
 
-## Introduction
+### For Teachers
+- **Course Management**: Create and manage multiple courses
+- **Assignment Creation**: Design assignments with custom test cases
+- **Automated Grading**: Real-time code execution and testing
+- **Student Progress**: Track submissions and performance
+- **Test Case Management**: Define input/output test cases for assignments
 
-This is a hybrid Next.js + Python app that uses Next.js as the frontend and Flask as the API backend. One great use case of this is to write Next.js apps that use Python AI libraries on the backend.
+### For Students
+- **Course Enrollment**: Join courses and view assignments
+- **Code Submission**: Submit Python solutions with instant feedback
+- **Real-time Results**: See test results and scores immediately
+- **Progress Tracking**: Monitor your performance across assignments
 
-## How It Works
+### Technical Features
+- **Secure Code Execution**: Sandboxed Python code execution with timeouts
+- **Modern UI**: Apple Music-inspired design with smooth animations
+- **Real-time Feedback**: Instant grading and detailed test results
+- **Responsive Design**: Works perfectly on desktop and mobile devices
+- **Dark Mode Support**: Automatic dark/light theme switching
 
-The Python/Flask server is mapped into to Next.js app under `/api/`.
+## 🛠️ Tech Stack
 
-This is implemented using [`next.config.js` rewrites](https://github.com/vercel/examples/blob/main/python/nextjs-flask/next.config.js) to map any request to `/api/:path*` to the Flask API, which is hosted in the `/api` folder.
+### Frontend
+- **Next.js 13** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first CSS framework
+- **Framer Motion** - Smooth animations and transitions
+- **Lucide React** - Beautiful icons
+- **React Hot Toast** - Elegant notifications
 
-On localhost, the rewrite will be made to the `127.0.0.1:5328` port, which is where the Flask server is running.
+### Backend
+- **Flask** - Python web framework
+- **SQLAlchemy** - Database ORM
+- **Flask-JWT-Extended** - JWT authentication
+- **SQLite** - Database (easily replaceable with PostgreSQL/MySQL)
+- **bcrypt** - Password hashing
 
-In production, the Flask server is hosted as [Python serverless functions](https://vercel.com/docs/concepts/functions/serverless-functions/runtimes/python) on Vercel.
+## 📦 Installation
 
-## Demo
+### Prerequisites
+- Node.js 16+ and pnpm
+- Python 3.8+
+- Git
 
-https://nextjs-flask-starter.vercel.app/
+### Setup Instructions
 
-## Deploy Your Own
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd python-auto-grader
+   ```
 
-You can clone & deploy it to Vercel with one click:
+2. **Install frontend dependencies**
+   ```bash
+   pnpm install
+   ```
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?demo-title=Next.js%20Flask%20Starter&demo-description=Simple%20Next.js%20boilerplate%20that%20uses%20Flask%20as%20the%20API%20backend.&demo-url=https%3A%2F%2Fnextjs-flask-starter.vercel.app%2F&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F795TzKM3irWu6KBCUPpPz%2F44e0c6622097b1eea9b48f732bf75d08%2FCleanShot_2023-05-23_at_12.02.15.png&project-name=Next.js%20Flask%20Starter&repository-name=nextjs-flask-starter&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fexamples%2Ftree%2Fmain%2Fpython%2Fnextjs-flask&from=vercel-examples-repo)
+3. **Install backend dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## Developing Locally
+4. **Initialize the database**
+   ```bash
+   python init_db.py
+   ```
 
-You can clone & create this repo with the following command
+5. **Start the development servers**
+   ```bash
+   # Start both frontend and backend
+   pnpm run dev
+   
+   # Or start them separately:
+   # Frontend (in one terminal)
+   pnpm run next-dev
+   
+   # Backend (in another terminal)
+   pnpm run flask-dev
+   ```
 
-```bash
-npx create-next-app nextjs-flask --example "https://github.com/vercel/examples/tree/main/python/nextjs-flask"
+6. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5328
+
+## 🔐 Default Credentials
+
+The system comes with a default teacher account:
+- **Username**: admin
+- **Password**: admin123
+- **Role**: Teacher
+
+Students can register for new accounts through the registration form.
+
+## 🏗️ Project Structure
+
+```
+python-auto-grader/
+├── api/                    # Flask backend
+│   └── index.py           # Main Flask application
+├── app/                   # Next.js frontend
+│   ├── components/        # React components
+│   ├── lib/              # Utilities and API client
+│   ├── globals.css       # Global styles
+│   ├── layout.tsx        # Root layout
+│   └── page.tsx          # Main page
+├── public/               # Static assets
+├── init_db.py           # Database initialization script
+├── requirements.txt     # Python dependencies
+├── package.json         # Node.js dependencies
+└── README.md           # This file
 ```
 
-## Getting Started
+## 🎨 UI Design
 
-First, install the dependencies:
+The application features a modern design inspired by Apple Music:
 
-```bash
-npm install
-# or
-yarn
-# or
-pnpm install
-```
+- **Clean Typography**: Inter font for excellent readability
+- **Smooth Animations**: Framer Motion for delightful interactions
+- **Glass Morphism**: Subtle transparency effects
+- **Consistent Spacing**: Carefully crafted spacing system
+- **Color Palette**: Red accent colors with neutral grays
+- **Dark Mode**: Automatic theme switching based on system preference
 
-Then, run the development server:
+## 🔧 API Endpoints
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Courses
+- `GET /api/courses` - List user's courses
+- `POST /api/courses` - Create new course (teachers only)
 
-The Flask server will be running on [http://127.0.0.1:5328](http://127.0.0.1:5328) – feel free to change the port in `package.json` (you'll also need to update it in `next.config.js`).
+### Assignments
+- `GET /api/courses/{id}/assignments` - List course assignments
+- `POST /api/assignments` - Create assignment (teachers only)
+- `GET /api/assignments/{id}` - Get assignment details
 
-## Learn More
+### Submissions
+- `POST /api/submissions` - Submit assignment solution
+- `GET /api/assignments/{id}/submissions` - List submissions
+- `GET /api/submissions/{id}` - Get submission details
 
-To learn more about Next.js, take a look at the following resources:
+## 🧪 Auto-Grading System
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Flask Documentation](https://flask.palletsprojects.com/en/1.1.x/) - learn about Flask features and API.
+The auto-grading engine:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+1. **Receives** student code submission
+2. **Creates** temporary Python file
+3. **Executes** code with test case inputs
+4. **Compares** output with expected results
+5. **Calculates** score based on passed tests
+6. **Returns** detailed feedback and results
+
+### Security Features
+- **Sandboxed Execution**: Code runs in isolated environment
+- **Timeout Protection**: 10-second execution limit
+- **Input Validation**: Sanitized test inputs
+- **Error Handling**: Graceful error reporting
+
+## 🚀 Deployment
+
+### Production Setup
+
+1. **Environment Variables**
+   ```bash
+   export FLASK_ENV=production
+   export JWT_SECRET_KEY=your-secure-secret-key
+   export DATABASE_URL=your-database-url
+   ```
+
+2. **Database Migration**
+   ```bash
+   # For production, consider using PostgreSQL
+   pip install psycopg2-binary
+   # Update DATABASE_URL in api/index.py
+   ```
+
+3. **Build Frontend**
+   ```bash
+   pnpm run build
+   ```
+
+4. **Deploy**
+   - Frontend: Deploy to Vercel, Netlify, or similar
+   - Backend: Deploy to Heroku, Railway, or similar
+   - Database: Use managed PostgreSQL service
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- Inspired by Apple Music's beautiful design system
+- Built with modern web technologies for optimal performance
+- Designed for educational use in Python programming courses
+
+---
+
+**Happy Coding! 🐍✨**
